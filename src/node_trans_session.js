@@ -15,13 +15,14 @@ class NodeTransSession extends EventEmitter {
   constructor(conf) {
     super();
     this.conf = conf;
+    this.startAt = new Date().toISOString().replace(/\.\d*/, '') // 2021-10-05T17:00:00
   }
 
   run() {
     let vc = this.conf.vc || 'copy';
     let ac = this.conf.ac || 'copy';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.rtmpPort + this.conf.streamPath;
-    let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
+    let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}/${this.startAt}`;
     let mapStr = '';
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
@@ -78,6 +79,9 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
+      // Add ability to keep files
+      if (this.conf.cleanup === false) return
+
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
